@@ -1,4 +1,4 @@
-##model optimal n, optimizing alpha for optimal n.
+##model alpha optimization for each n
 
 
 import csv
@@ -106,6 +106,8 @@ def final_modal(data,alpha,n):
 	I[0][0]=0
 	result=np.matmul(np.matmul(np.linalg.inv(np.matmul(x_t,x)+(alpha**2)*I),x_t),y)
 
+	print result
+
 	prediction=np.matmul(x,result)
 
 	final_mod=data[0:n]
@@ -119,47 +121,21 @@ def get_best_modal(data,fold):
 	mse_train_set=[]
 	mse_test_set=[]
 	prev=float("inf")
+	alpha=0.01
 	print("STARTED!")
-	for i in range(0,744/fold,1):
-		mse_train,mse_test=linear_reg(data[2:],0.01,i,fold)
-		if(mse_test<prev):
+	for i in range(0,744/fold,3):
+		mse_train_n,mse_test_n=linear_reg(data[2:],alpha,i,fold)
+
+		mse_train_alpha,mse_test_alpha=linear_reg(data[2:],alpha+0.01,i,fold)
+
+		if(mse_test_n<prev):
 			n=i
-			prev=mse_test
-		mse_train_set.append(mse_train)
-		mse_test_set.append(mse_test)
+			prev=mse_test_n
+
+		if(mse_test_alpha<prev):
+			alpha+=0.01
+			prev=mse_test_alpha
 		#print ("alpha:",0.01,"n:",n,"mse_train:",mse_train,"mse_test:",mse_test);
-    
-	plt.figure(1).clear
-	plt.ylabel(' AVERAGE MSE ERROR')
-	plt.xlabel('n(lagging points)')
-	plt.plot(mse_train_set,label="training")
-	plt.plot(mse_test_set, label="validation")
-	plt.legend()
-
-	
-	mse_train_set=[]
-	mse_test_set=[]
-	alpha=0
-	prev=float("inf")
-	i=0.01
-	alpha_set=[]
-	while(i<1):
-		mse_train,mse_test=linear_reg(data[2:],i,n,fold)
-		if (mse_test<prev):
-			alpha=i
-			prev=mse_test
-		alpha_set.append(i)
-		mse_train_set.append(mse_train)
-		mse_test_set.append(mse_test)
-		i+=0.01
-		#print ("alpha:",i,"n:",n,"mse_train:",mse_train,"mse_test:",mse_test);
-
-	plt.figure(2).clear
-	plt.ylabel(' AVERAGE MSE ERROR')
-	plt.xlabel('alpha')
-	plt.plot(alpha_set,mse_train_set,label="training")
-	plt.plot(alpha_set,mse_test_set, label="validation")
-	plt.legend()
 
 
 	result=final_modal(data[2:],alpha,n)
@@ -187,14 +163,14 @@ with open('csvdata.csv','rb') as csvfile:
 
 	data=getList(data)
 
-	modal=get_best_modal(data[35],4);#35
+	modal=get_best_modal(data[29],6);#35
 
 	print(len(data))
 
 	plt.figure(3).clear
 	plt.ylabel('price of e5')
 	plt.xlabel('timeseries')
-	plt.plot(data[35][2:],label='real value')
+	plt.plot(data[29][2:],label='real value')
 	plt.plot(modal,label='regression estimation')
 	plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
            ncol=2, mode="expand", borderaxespad=0.)
